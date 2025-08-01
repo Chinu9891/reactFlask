@@ -23,7 +23,7 @@ def subscribe_to_streamer(broadcaster_id):
         },
         "transport": {
             "method": "webhook",
-            "callback": "https://ef0144da54fd.ngrok-free.app/webhook",
+            "callback": "https://0634364b3063.ngrok-free.app/webhook",
             "secret": os.getenv('TWITCH_WEBHOOK_SECRET')
         }
     }
@@ -81,6 +81,7 @@ def delete_eventsub_subscription(subscription_id):
 
 
 if __name__ == '__main__':
+
     for id in list_eventsub_subscriptions():
         delete_eventsub_subscription(id)
     #subscribe_to_streamer("428105098")

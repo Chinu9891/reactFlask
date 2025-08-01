@@ -1,3 +1,7 @@
+import hashlib
+import hmac
+import os
+
 from flask import Flask, request, jsonify, session
 from config import ApplicationConfig
 from models import User, db, Streamer
@@ -5,7 +9,7 @@ from flask_bcrypt import Bcrypt
 from flask_session import Session
 from flask_cors import CORS
 from flask_mail import Mail, Message
-from twitchAPI.twitchAPI import fetch_streamer
+from twitchAPI.twitchAPI import fetch_streamer, subscribe_to_streamer, delete_eventsub_subscription, list_eventsub_subscriptions
 
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
@@ -21,12 +25,34 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+def verify_signature(req):
+    secret = os.getenv('TWITCH_WEBHOOK_SECRET')
+    headers = req.headers
+    raw_body = req.get_data()
+
+    try:
+        message = (
+            headers['Twitch-Eventsub-Message-Id'] +
+            headers['Twitch-Eventsub-Message-Timestamp'] +
+            raw_body.decode('utf-8'))
+    except KeyError as e:
+        print(f"Missing header {e}")
+        return False
+
+    expected_signature = 'sha256=' + hmac.new(secret.encode('utf-8'),message.encode('utf-8'),hashlib.sha256).hexdigest()
+
+    provided_signature = headers.get('Twitch-Eventsub-Message-Signature', '')
+    return hmac.compare_digest(expected_signature, provided_signature)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    req = request.get_json(force=True)
 
-    print(req)
+    #verify signature first
+    if not verify_signature(request):
+        print("Signature mismatch!")
+        return '', 403
+
+    req = request.get_json(force=True)
     message_type = request.headers.get("Twitch-Eventsub-Message-Type")
 
     if message_type == "webhook_callback_verification":
@@ -112,17 +138,19 @@ def follow():
 
     strm = request.json.get('streamer')
 
-    id = strm.get('id')
+    streamer_id = strm.get('id')
 
-    streamer = Streamer.query.get(id)
+    streamer = Streamer.query.get(streamer_id)
 
     if not streamer:
-        streamer = Streamer(id=id,name=strm.get('name'), img=strm.get('img'), isFeatured=False)
+        streamer = Streamer(id=streamer_id,name=strm.get('name'), img=strm.get('img'), isFeatured=False)
         db.session.add(streamer)
 
-    if not user.followed_streamers.filter_by(id=id).first():
+    if not user.followed_streamers.filter_by(id=streamer_id).first():
         user.followed_streamers.append(streamer)
         db.session.commit()
+
+    subscribe_to_streamer(streamer_id)
 
     return jsonify({}), 200
 
@@ -194,7 +222,6 @@ def login():
     password = request.json.get('password')
     user = User.query.filter_by(email=email).first()
 
-
     if user is None:
         return jsonify({"Error": "Invalid email or password"}), 401
 
@@ -208,7 +235,6 @@ def login():
         "id": user.id,
         "email": user.email,
     })
-
 
 if __name__ == '__main__':
     app.run(debug=True)
