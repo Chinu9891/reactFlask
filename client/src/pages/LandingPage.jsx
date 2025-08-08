@@ -13,8 +13,6 @@ const LandingPage = () => {
     const navigate = useNavigate();
     const setUi = useSetAtom(uiAtom)
 
-    const [currModal, setModal] = useState(null)
-
 
     useEffect(() => {
         if (user) {
