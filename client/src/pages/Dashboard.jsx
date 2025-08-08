@@ -79,7 +79,7 @@ const Dashboard = () => {
             <NavBar />
 
             <div className="search-specific">
-                <h2>Don't see a streamer? Search unfeatured:</h2>
+                <h2>Don't see a streamer? Search for a specific one:</h2>
 
                 <input
                     type="text"
@@ -94,9 +94,9 @@ const Dashboard = () => {
                         <div className="grid-item">
                             <StreamerCard streamer={search}/>
                             {followedID.includes(search.id) ? (
-                                <button onClick={() => unfav(search)}>Unfollow</button>
+                                <button onClick={() => unfav(search)}>Sub</button>
                             ) : (
-                                <button onClick={() => fav(search)}>Follow</button>
+                                <button onClick={() => fav(search)}>Unsub</button>
                             )}
                         </div>
                     )}
@@ -130,9 +130,9 @@ const Dashboard = () => {
                             <div className="grid-item" key={streamer.id}>
                                 <StreamerCard streamer={streamer}/>
                                 {isFav ? (
-                                    <button onClick={() => unfav(streamer)}>Unfollow</button>
+                                    <button onClick={() => unfav(streamer)}>Sub</button>
                                 ) : (
-                                    <button onClick={() => fav(streamer)}>Follow</button>
+                                    <button onClick={() => fav(streamer)}>Unsub</button>
                                 )}
                             </div>
                         );

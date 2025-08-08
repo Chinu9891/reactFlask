@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import httpClient from "../httpClient";
 import { useAuth } from "../contexts/authContext";
 import StreamerCard from "../components/StreamerCard.jsx";
+import NavBar from "../components/NavBar.jsx";
 
 const Favorites = () => {
     const [favStreamers, setFav] = useState([]);
@@ -41,17 +42,16 @@ const Favorites = () => {
 
     return (
   <div>
-    <a href="/dashboard">
-      <button>Dashboard</button>
-    </a>
-    <div className="grid-container">
-      {favStreamers.map((streamer) => (
-          <div className="grid-item" key={streamer.id}>
-              <StreamerCard streamer={streamer}/>
-              <button onClick={() => unfav(streamer)}>Unfollow</button>
-          </div>
-      ))}
-    </div>
+
+      <NavBar />
+      <div className="grid-container">
+          {favStreamers.map((streamer) => (
+              <div className="grid-item" key={streamer.id}>
+                  <StreamerCard streamer={streamer}/>
+                  <button onClick={() => unfav(streamer)}>Unfollow</button>
+              </div>
+          ))}
+      </div>
   </div>
     );
 

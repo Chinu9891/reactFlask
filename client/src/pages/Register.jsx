@@ -25,7 +25,7 @@ const RegisterPage = () => {
     }
 
     return (
-        <div>
+        <div className={"register-container"}>
             <h1>Register an account</h1>
             <form>
                 <div>

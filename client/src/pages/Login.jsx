@@ -9,6 +9,7 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const { user, fetchUser } = useAuth();
 
+
     useEffect(() => {
         if (user) {
             console.log("User logged in, navigating to dashboard");

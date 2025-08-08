@@ -23,7 +23,7 @@ def subscribe_to_streamer(broadcaster_id):
         },
         "transport": {
             "method": "webhook",
-            "callback": "https://0634364b3063.ngrok-free.app/webhook",
+            "callback": "https://6b6d7907a404.ngrok-free.app/webhook",
             "secret": os.getenv('TWITCH_WEBHOOK_SECRET')
         }
     }
