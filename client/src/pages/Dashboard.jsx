@@ -94,9 +94,9 @@ const Dashboard = () => {
                         <div className="grid-item">
                             <StreamerCard streamer={search}/>
                             {followedID.includes(search.id) ? (
-                                <button onClick={() => unfav(search)}>Sub</button>
+                                <button onClick={() => unfav(search)}>Unsub</button>
                             ) : (
-                                <button onClick={() => fav(search)}>Unsub</button>
+                                <button onClick={() => fav(search)}>Sub</button>
                             )}
                         </div>
                     )}
@@ -130,9 +130,9 @@ const Dashboard = () => {
                             <div className="grid-item" key={streamer.id}>
                                 <StreamerCard streamer={streamer}/>
                                 {isFav ? (
-                                    <button onClick={() => unfav(streamer)}>Sub</button>
+                                    <button onClick={() => unfav(streamer)}>Unsub</button>
                                 ) : (
-                                    <button onClick={() => fav(streamer)}>Unsub</button>
+                                    <button onClick={() => fav(streamer)}>Sub</button>
                                 )}
                             </div>
                         );

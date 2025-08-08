@@ -18,5 +18,11 @@ class ApplicationConfig():
     SESSION_USE_SIGNER = True
     SESSION_REDIS = redis.from_url("redis://127.0.0.1:6379")
 
+    MAIL_SERVER = 'smtp.gmail.com'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = 'sharmachinu2003@gmail.com'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+
     PERMANENT_SESSION_LIFETIME = timedelta(hours=1)
 

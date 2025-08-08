@@ -29,5 +29,4 @@ class Streamer(db.Model):
     name = db.Column(db.String(120), unique=True, nullable=False)
     img = db.Column(db.String(120), unique=False, nullable=False)
     isFeatured = db.Column(db.Boolean, unique=False, nullable=False)
-
-
+    subscription_id = db.Column(db.String(120), unique=True, nullable=True)

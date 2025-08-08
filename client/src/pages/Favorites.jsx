@@ -48,7 +48,7 @@ const Favorites = () => {
           {favStreamers.map((streamer) => (
               <div className="grid-item" key={streamer.id}>
                   <StreamerCard streamer={streamer}/>
-                  <button onClick={() => unfav(streamer)}>Unfollow</button>
+                  <button onClick={() => unfav(streamer)}>Unsub</button>
               </div>
           ))}
       </div>

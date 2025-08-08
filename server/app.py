@@ -6,15 +6,18 @@ import threading
 from flask import Flask, request, jsonify, session
 from config import ApplicationConfig
 from models import User, db, Streamer
+from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_session import Session
 from flask_cors import CORS
 from flask_mail import Mail, Message
-from twitchAPI.twitchAPI import fetch_streamer, subscribe_to_streamer, delete_eventsub_subscription, list_eventsub_subscriptions
+
+from twitchAPI.twitch_api import TwitchAPI
 import asyncio
 import websockets
 
 app = Flask(__name__)
+twitch = TwitchAPI()
 app.config.from_object(ApplicationConfig)
 mail = Mail(app)
 
@@ -24,9 +27,8 @@ CORS(app, supports_credentials=True, origins=[
 ])
 server_session = Session(app)
 db.init_app(app)
+migrate = Migrate(app, db)
 
-with app.app_context():
-    db.create_all()
 
 def verify_signature(req):
     secret = os.getenv('TWITCH_WEBHOOK_SECRET')
@@ -94,8 +96,22 @@ def webhook():
 
     elif message_type == "notification":
         print("Notification received:")
+
         #asyncio.run_coroutine_threadsafe(send_msg("BATCHEST!"), loop)
-        print(req)
+
+        streamer_id = req['event']['broadcaster_user_id']
+        sub_id = req['subscription']['id']
+        streamer = Streamer.query.get(streamer_id)
+
+        for follower in streamer.followers.all():
+            msg = Message(
+                subject="Test Email",
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[follower.email],
+                body="This is a test email sent from Flask!"
+            )
+            mail.send(msg)
+
         return '', 204
 
     elif message_type == "revocation":
@@ -158,7 +174,7 @@ def get_streamer():
     if not name:
         return jsonify({"Error": "Missing streamer name"}), 400
 
-    streamer_data = fetch_streamer(name)
+    streamer_data = twitch.fetch_streamer(name)
     if streamer_data['success']:
         return jsonify(streamer_data), 200
     else:
@@ -175,15 +191,21 @@ def follow():
 
     streamer = Streamer.query.get(streamer_id)
 
+    result = twitch.subscribe_to_streamer(streamer_id)
+
+    if not result["success"]:
+        return jsonify({"Error": result["error"]}), 400
+
     if not streamer:
-        streamer = Streamer(id=streamer_id,name=strm.get('name'), img=strm.get('img'), isFeatured=False)
+        streamer = Streamer(id=streamer_id,name=strm.get('name'), img=strm.get('img'), isFeatured=False, subscription_id=result['id'])
         db.session.add(streamer)
+    else:
+        if streamer.subscription_id is None:
+            streamer.subscription_id = result['id']
 
     if not user.followed_streamers.filter_by(id=streamer_id).first():
         user.followed_streamers.append(streamer)
         db.session.commit()
-
-    subscribe_to_streamer(streamer_id)
 
     return jsonify({}), 200
 
@@ -200,6 +222,11 @@ def unfollow():
 
 
     user.followed_streamers.remove(streamer)
+
+    if streamer.followers.first() is None:
+        twitch.delete_subscription(streamer.subscription_id)
+        streamer.subscription_id = None
+
     db.session.commit()
 
     return jsonify({}), 200
