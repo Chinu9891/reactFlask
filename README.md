@@ -2,4 +2,7 @@ A webapp that allows users to subscribe to twitch streamers for notification eve
 
 Most of the core functionliaty is implemented and styling mostly done too. 
 
-Next step: deployment?
+Next steps:
+
+Implement email functionality (easy).
+Deployment?
