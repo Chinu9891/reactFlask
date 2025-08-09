@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 import os
-import threading
 
 from flask import Flask, request, jsonify, session
 from config import ApplicationConfig
@@ -13,8 +12,6 @@ from flask_cors import CORS
 from flask_mail import Mail, Message
 
 from twitchAPI.twitch_api import TwitchAPI
-import asyncio
-import websockets
 
 app = Flask(__name__)
 twitch = TwitchAPI()
@@ -41,7 +38,6 @@ def verify_signature(req):
             headers['Twitch-Eventsub-Message-Timestamp'] +
             raw_body.decode('utf-8'))
     except KeyError as e:
-        print(f"Missing header {e}")
         return False
 
     expected_signature = 'sha256=' + hmac.new(secret.encode('utf-8'),message.encode('utf-8'),hashlib.sha256).hexdigest()
@@ -49,41 +45,9 @@ def verify_signature(req):
     provided_signature = headers.get('Twitch-Eventsub-Message-Signature', '')
     return hmac.compare_digest(expected_signature, provided_signature)
 
-# loop = asyncio.new_event_loop()
-# connected_clients = set()
-# async def send_msg(message):
-#     if connected_clients:
-#         await asyncio.gather(*[client.send(message) for client in connected_clients])
-#     else:
-#         print("No connected clients to send message to.")
-#
-# async def ws_handler(websocket):
-#     print("Client connected")
-#     connected_clients.add(websocket)
-#     try:
-#         async for message in websocket:
-#             print(f"Received from client: {message}")
-#     except Exception as e:
-#         print(f"Error: {e}")
-#     finally:
-#         connected_clients.remove(websocket)
-#         print("Client disconnected")
-#
-# async def start_ws():
-#     server = await websockets.serve(ws_handler, "localhost", 8765)
-#     print("WebSocket server running on ws://localhost:8765")
-#     await asyncio.Future()  # Run forever
-#
-# def run_websocket_server():
-#     asyncio.set_event_loop(loop)
-#     loop.run_until_complete(start_ws())
-
-
-
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if not verify_signature(request):
-        print("Signature mismatch!")
         return '', 403
 
     req = request.get_json(force=True)
@@ -91,16 +55,10 @@ def webhook():
 
     if message_type == "webhook_callback_verification":
         challenge = req.get("challenge")
-        print(f"Verification challenge received: {challenge}")
         return challenge, 200
 
     elif message_type == "notification":
-        print("Notification received:")
-
-        #asyncio.run_coroutine_threadsafe(send_msg("BATCHEST!"), loop)
-
         streamer_id = req['event']['broadcaster_user_id']
-        sub_id = req['subscription']['id']
         streamer = Streamer.query.get(streamer_id)
 
         for follower in streamer.followers.all():
@@ -115,12 +73,9 @@ def webhook():
         return '', 204
 
     elif message_type == "revocation":
-        print("Subscription revoked:")
-        print(req)
         return '', 204
 
     else:
-        print("Unhandled message type or invalid request.")
         return '', 400
 
 @app.route('/register', methods=['POST'])
@@ -297,10 +252,5 @@ def login():
     })
 
 if __name__ == '__main__':
-    #ws_thread = threading.Thread(target=run_websocket_server)
-    #ws_thread.daemon = True
-    #ws_thread.start()
-
-    # Main Flask app
     app.run(port=5000, debug=True, use_reloader=False)
 
